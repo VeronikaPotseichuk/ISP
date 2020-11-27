@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Options>
+  <SourcePath>D:\.NET\Lab3\bin\Debug\SourceDirectory</SourcePath>
+  <TargetPath>D:\.NET\Lab3\bin\Debug\TargetDirectory</TargetPath>
+  <LoggerPath>D:\.NET\templog.txt</LoggerPath>
+  <NeedToEncrypt>true</NeedToEncrypt>
+  <ArchiveOptions>true</ArchiveOptions>
+</Options>
