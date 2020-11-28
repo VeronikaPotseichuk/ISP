@@ -7,11 +7,11 @@ using System.IO;
 
 namespace Lab3
 {
-    class JsonParser : IParser
+    class JSON_Parser : IParser
     {
         private string Path { get; }
         private string ConfigPath { get; }
-        public JsonParser(string path, string configPath)
+        public JSON_Parser(string path, string configPath)
         {
             Path = path;
             ConfigPath = configPath;
