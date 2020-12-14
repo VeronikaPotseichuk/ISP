@@ -1,0 +1,7 @@
+﻿<?xml version="1.0"?>
+<DataOptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ConnectionString>Data Source=DESKTOP-38SSQ5B;Initial Catalog=AdventureWorks2019;Integrated Security=True</ConnectionString>
+  <SourcePath>D:\.NET\Lab3\bin\Debug\SourceDirectory</SourcePath>
+  <OutputFolder>D:\.NET\Lab3\bin\Debug\output</OutputFolder>
+  <LoggerConnectionString>Data Source=DESKTOP-47SSQ5B;Initial Catalog=ApplicationInsights;Integrated Security=True</LoggerConnectionString>
+</DataOptions>

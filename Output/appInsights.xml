@@ -1,0 +1,19 @@
+<?xml version="1.0" standalone="yes"?>
+<Insights>
+  <Insight>
+    <Message>Connection was successfully established</Message>
+    <Time>2020-12-13T21:15:35.347+03:00</Time>
+  </Insight>
+  <Insight>
+    <Message>Customers were received successfully</Message>
+    <Time>2020-12-13T21:15:35.447+03:00</Time>
+  </Insight>
+  <Insight>
+    <Message>Files were sent to FTP successfully</Message>
+    <Time>2020-12-13T21:15:35.5+03:00</Time>
+  </Insight>
+  <Insight>
+    <Message>Service was successfully stopped</Message>
+    <Time>2020-12-13T21:15:39.68+03:00</Time>
+  </Insight>
+</Insights>
