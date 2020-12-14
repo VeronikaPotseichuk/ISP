@@ -1,59 +1,126 @@
-# Лабораторная работа 4
+# Лабораторная работа №4
 
-## Исиченко Егор 953505
+## Потейчук Вероника 953502
 
-## Что делает программа?
+## Предисловие
 
-Во-первых, это Windows-служба. Во-вторых, для работы использовалась база данных AdventureWorks2019, которую скачал с официального сайта.
+Это всё та же Windows-служба, только с использованием базы данных AdventureWorks2019, которую посоветовал скачать Артём Петрович)
 
-### Общий алгоритм работы:
+### Как работает:
 
-1. Старт службы (**DataManager**)
-2. Вытягиваются необходимые настройки из XML/JSON
-3. Извлекаются данные из базы данных AventureWorks2019
-4. Формируются на их основе XML и XSD файлы с данными
-5. Эти файлы отправляются на FTP сервер (SourceDirectory из 3 лабы)
-6. Служба из 3 лабы (**FileManager** - запускается **до DataManager**) дальше делает всю необходимую работу по отправке в TargetDirectory (сам сервер)
-7. Все успешные действия и исключения логируются в созданную мной базу данных **ApplicationInsights** и по окончании работы данные записываются в XML файл и создается XSD
-8. Конец работы **DataManager**
+* Наша служба (**DataManager**) запускается;
+* Следующим этапом идёт сбор необходимых настроек из XML/JSON;
+* Из базы данных *AventureWorks2019* извлекаются, как не удивительно, данные, на основе которых фосмируются XML и XSD файлы;
+* Затем сформированные файлы отправляются на FTP (File Transfer Protocol) сервер, представленный в третьей лабораторной как SourceDirectory;
+* Служба **FileManager** делает всю необходимую работу по отправке данных в TargetDirectory;
+* Все успешные действия и исключения записываются в БД **ApplicationInsights** и когда работа завершается, то данные записываются в XML файл и создается XSD;
+* Конец работы **DataManager**
 
-## Как реализовано?
+    * Лирическое отступление: Службы **DataManager** и **FileMenager** работают одновременно и все настройки берут из **ConfigManager**.
 
-### Со стороны SQL:
+## Реализация
 
-Я заджойнил 7 таблиц которые связаны друг с другом внешним ключом и вывел необходимые колонки и так получил таблицу покупателей в разных магазинах, которые отсортированы по их номеру счета (всего 701 запись как можете видеть в правом нижнем углу):
+Объединённые 5 таблиц, которые связаны между собой внешним ключом, выведены в таблицу покупателей в разных магазинах. Они отсортированы по их номеру счета (AccountNumber):
 
 ![Screenshot](Screenshots/1.png)
 
-Запрос к базе данных выглядит вот так:
+
+Запрос к базе данных:
+
+```sql
+select
+Person.Person.FirstName,
+Person.Persom.LastName,
+Sales.Customer.AccountNumber,
+Sales.Store.Name as StoreName,
+Sales.SalesTerritory.CountryRegionCode,
+Person.CountryRegion.Name,
+Sales.CountryRegionCurrency.CurrencyCode,
+Sales.Currency.Name,
+from Sales.Customer
+join Sales.Store on Sales.Customer.StoreID = Sales.Store.BusinessEntityID
+join Sales.SalesTrritory on Sales.SalesTerritory.TerritoryID = Sales.Customer.TerritoryId
+join Person.Person on Sales.Customer.PersonID = person.Person.BusinessEntityID
+join Sales.CountryRegionCurrency on Sales.SalesTerritory.CountryRegionCode = Sales.CountryRegionCurrency.CountryRegionCode
+join Sales.Currency on Sales.CountryRegionCurrency.CurrencyCode = Sales.Currency.CurrencyCode
+join Person.CountryRegion on Sales.SalesTerritory.CountryRegionCode = Person.CountryRegion.CountryRegionCode
+order by AccountNumber
+```
+
+Затем этот запрос стал основой хранимой процедуры sp_GetCustomers:
+
+```sql
+USE [AdventureWorks2019]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_iDENTIFIER ON
+GO
+ALTER procedure [dbo].[sp_GetCustomers]
+as
+    select
+    Person.Person.FirstName,
+    Person.Persom.LastName,
+    Sales.Customer.AccountNumber,
+    Sales.Store.Name as StoreName,
+    Sales.SalesTerritory.CountryRegionCode,
+    Person.CountryRegion.Name,
+    Sales.CountryRegionCurrency.CurrencyCode,
+    Sales.Currency.Name,
+    from Sales.Customer
+    join Sales.Store on Sales.Customer.StoreID = Sales.Store.BusinessEntityID
+    join Sales.SalesTrritory on Sales.SalesTerritory.TerritoryID = Sales.Customer.TerritoryId
+    join Person.Person on Sales.Customer.PersonID = person.Person.BusinessEntityID
+    join Sales.CountryRegionCurrency on Sales.SalesTerritory.CountryRegionCode = Sales.CountryRegionCurrency.CountryRegionCode
+    join Sales.Currency on Sales.CountryRegionCurrency.CurrencyCode = Sales.Currency.CurrencyCode
+    join Person.CountryRegion on Sales.SalesTerritory.CountryRegionCode = Person.CountryRegion.CountryRegionCode
+    order by AccountNumber
+```
+
+Она то и используется в коде C# по причине своей большей безопасности и производительности.
+
+БД **ApplicationInsights** - туда в таблицу **Insights** записываются исключения и успешные действия программы
+
+При отсутствии исключений:
 
 ![Screenshot](Screenshots/2.png)
 
-Потом я из этого запроса сделал хранимую процедуру sp_GetCustomers, которая выглядит вот так:
+При исключении:
 
 ![Screenshot](Screenshots/3.png)
 
-Ее мы и будем использовать в коде C#, т.к. это более безопасно и производительно.
+Хранимые процедуры:
 
-База данных **ApplicationInsights** - туда в таблицу **Insights** логируются исключения и успешные действия в программе в таком виде (без исключений):
+    Хранимая процедура для очистки таблицы:
 
-![Screenshot](Screenshots/4.png)
+```sql
+USE [ApplicationInsights]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_iDENTIFIER ON
+GO
+ALTER procedure [dbo].[sp_GetCustomers]
+as
+    delete Insights
+```
 
-С исключением:
+    Хранимая процедура для получения данных, в будующем используемых в коде для записи
+```sql
+USE [ApplicationInsights]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_iDENTIFIER ON
+GO
+ALTER procedure [dbo].[sp_GetCustomers]
+as
+    select Message, Time from Insights
+```
 
-![Screenshot](Screenshots/5.png)
+ *Сlass library* сформирован для удобства, а всё содержимое находится в папке **ServiceLibrary** с *ConfigManager*, `xml`- и  `json`-парсерами. Проект подключён как зависимость к обеим службам.
 
-Также сделал хранимые процедуры для добавления записи, очистки таблицы и получения всех данных которые будем использовать в коде C# для ведения лога:
-
-![Screenshot](Screenshots/6.png)
-
-![Screenshot](Screenshots/7.png)
-
-![Screenshot](Screenshots/8.png)
-
-### Со стороны C#:
-
-Т.к. работает две службы одновременно и все они вытягивают настройки через **ConfigManager**, который я делал в 3 лабораторной, то для удобства сделал *class library* **ServiceLibrary** (все содержимое находится в соответствующей папке) и добавил туда из 3 лабораторной *ConfigManager*, xml и  json парсеры и подключаю проект как зависимость к обеим службам.
+Вся функциональность **LINQ to XML** содержится в пространстве имен *System.Xml.Linq*, а основная функциональность по работе с **JSON** сосредоточена в пространстве имен *System.Text.Json*. Представление в памяти **схемы XML** *System.Xml.Schema*.
 
 Объект настроек для нашего **DataManager** - класс **DataOptions** (пример xml и json файлов настроек в папке **dataOptions**)
 
@@ -72,26 +139,22 @@ public class DataOptions
 }
 ```
 
-* **ConnectionString** - строка для подключения к базе данных
+* **ConnectionString** - строка для подключения к БД.
 
-* **LoggerConnectionString** - строка для подключения к базе данных логгера
+* **LoggerConnectionString** - строка для подключения к базе данных Logger.
 
-* **SourcePath** - путь к FTP
+* **SourcePath** - путь к File Transfer Protocol.
 
-* **OutputFolder** - папка, где изначально будут создаваться XML файлы с данными БД и XML файлы из БД логгера. Оттуда и будут пересылаться в *SourcePath* наши файлы.
+* **OutputFolder** - папка, где изначально будут создаваться XML файлы с данными БД и XML файлы из БД Logger. Оттуда и будут пересылаться в *SourcePath*  файлы.
 
-Новая папка в **ServiceLibrary** - *DataClasses* в которой находятся классы для работы с БД.
+Классы для работы с БД находятся в папке **ServiceLibrary**.
 
-Первый класс в ней - **DataIO**, с помощью которого мы можем добавлять, удалять, читать данные в БД *ApplicationInsights* и читать данные из *AdventureWorks2019*. В качестве *sql* команд используются хранимые процедуры, которые описаны выше. Все операции проходят в рамках *transaction scope*, то есть если будет какая-то ошибка, произойдет *rollback*, если все успешно - *commit* в базу данных. Также предусмотрел случай, когда исключение происходит на этапе подключения или работы с *ApplicationInsights*, тогда данные об исключении записываются в файл *Exceptions.txt*.
+Класс **DataIO** предназначен для работы с данными в БД *ApplicationInsights* и чтения данных из *AdventureWorks2019*. В качестве *sql* команд используются хранимые процедуры (приведены выше)
 
-Второй класс - **FileTransfer** принимает в конструктор *OutputFolder* и *SourcePath* и перемещает *fileName* на FTP с помощью метода *SendFileToFtp*.
+Класс **FileTransfer** принимает в конструктор *OutputFolder* и *SourcePath* и перемещает *fileName* на FTP.
 
-Третий класс - **XmlGenerator**. Название говорит само за себя - генерирует XML файл в *OutputFolder*. Для этого использует *DataSet* - база данных и дает имя файлу *fileName*. Все делается с помощью метода WriteToXml. Также генерируется рядом с XML файлом XSD файл, валидирующий его.
+Класс **XML_Generator** генерирует XML файл в *OutputFolder*. Рядом с XML файлом генерируется XSD файл, валидирующий его.
 
-Теперь переместимся в корневой каталог. Здесь находятся файлы в которых все выше перечисленное используется.
+В БД *ApplicationInsights* ведётся регистрация всех действий. По окончании работы службы из нее  формируется XML и XSD файл в *OutputFolder* для чтения данных.
 
-* **Program.cs** - точка входа в приложение. Там вытягивается конфигурация от сервиса и запускается сам **DataManger**. Также там осуществляется подключение к базе данных **ApplicationInsights**, куда записываются все действия и исключения в программе. Если исключение возникло раньше подключения или во время его, то они логируются в файл *Exceptions.txt*.
-
-* **DataManager.cs** - сама служба. В конструктор передаем конфигурацию и объект *appInsights* - объект DataIO. Далее в событии OnStart() создается еще один объект *DataIO* *reader*, который читает данные из БД *AdventureWorks2019* с помощью метода *GetCustomers*. Также этот метод формирует XML и XSD файлы. Далее происходит отправка на FTP двух файлов.
-
-Параллельно с этим ведется лог в БД *ApplicationInsights* и по окончании работы службы из нее тоже формируется XML и XSD файл в *OutputFolder* для чтения данных с помощью текстового редактора.
+The end. :raised_hands:
