@@ -122,7 +122,7 @@ as
 
 Вся функциональность **LINQ to XML** содержится в пространстве имен *System.Xml.Linq*, а основная функциональность по работе с **JSON** сосредоточена в пространстве имен *System.Text.Json*. Представление в памяти **схемы XML** *System.Xml.Schema*.
 
-Объект настроек для нашего **DataManager** - класс **DataOptions** (пример xml и json файлов настроек в папке **dataOptions**)
+Объект настроек для нашего **DataManager** - класс **DataOptions** (пример `xml` и `json` файлов настроек в папке **dataOptions**)
 
 ```c#
 public class DataOptions
@@ -145,16 +145,16 @@ public class DataOptions
 
 * **SourcePath** - путь к File Transfer Protocol.
 
-* **OutputFolder** - папка, где изначально будут создаваться XML файлы с данными БД и XML файлы из БД Logger. Оттуда и будут пересылаться в *SourcePath*  файлы.
+* **OutputFolder** - папка, где изначально будут создаваться `XML` файлы с данными БД и `XML` файлы из БД Logger. Оттуда и будут пересылаться в *SourcePath*  файлы.
 
 Классы для работы с БД находятся в папке **ServiceLibrary**.
 
-Класс **DataIO** предназначен для работы с данными в БД *ApplicationInsights* и чтения данных из *AdventureWorks2019*. В качестве *sql* команд используются хранимые процедуры (приведены выше)
+Класс **DataIO** предназначен для работы с данными в БД *ApplicationInsights* и чтения данных из *AdventureWorks2019*. В качестве `sql` команд используются хранимые процедуры (приведены выше)
 
 Класс **FileTransfer** принимает в конструктор *OutputFolder* и *SourcePath* и перемещает *fileName* на FTP.
 
-Класс **XML_Generator** генерирует XML файл в *OutputFolder*. Рядом с XML файлом генерируется XSD файл, валидирующий его.
+Класс **XML_Generator** генерирует `XML` файл в *OutputFolder*. Рядом с `XML` файлом генерируется `XSD` файл, валидирующий его.
 
-В БД *ApplicationInsights* ведётся регистрация всех действий. По окончании работы службы из нее  формируется XML и XSD файл в *OutputFolder* для чтения данных.
+В БД *ApplicationInsights* ведётся регистрация всех действий. По окончании работы службы из нее  формируется `XML` и `XSD` файл в *OutputFolder* для чтения данных.
 
 The end. :raised_hands:
